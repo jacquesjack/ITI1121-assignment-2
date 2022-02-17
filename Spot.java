@@ -9,34 +9,39 @@ public class Spot {
 	public Car getCar() {
 
 		// WRITE YOUR CODE HERE!
+		return this.car;
 
-		return null; // Remove this statement when your implementation is complete.
+		
 
 	}
 
 	public void setCar(Car car) {
 	
 		// WRITE YOUR CODE HERE!
+		this.car = car;
 	
 	}
 
 	public int getTimestamp() {
 	
 		// WRITE YOUR CODE HERE!
+		return this.timestamp;
 		
-		return -1; // Remove this statement when your implementation is complete.
-
+		
 	}
 
 	public void setTimestamp(int timestamp) {
 
 		// WRITE YOUR CODE HERE!
+		this.timestamp = timestamp;
 		
 	}
 
 	public Spot(Car car, int timestamp) {
 
 		// WRITE YOUR CODE HERE!
+		this.car = car;
+		this.timestamp = timestamp;
 		
 	}
 
