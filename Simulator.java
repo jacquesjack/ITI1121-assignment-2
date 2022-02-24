@@ -78,13 +78,16 @@ public class Simulator {
 		// a per-second rate (probability).
 		
 		//this.probabilityOfArrivalPerSec = new Rational(?, ?);
-
+		this.probabilityOfArrivalPerSec = new Rational(perHourArrivalRate, 3600);
 		
 		// Finally, you need to initialize the incoming and outgoing queues
 
 		// incomingQueue = new ...
-		// outgoingQueue = new ...
+		// outgoingQueue = new ... 
 
+		// not sure what to put as my size for the queues. Chose 100 b/c it seemed big enough
+		incomingQueue = new LinkedQueue<Spot>();
+		outgoingQueue = new LinkedQueue<Spot>();
 	}
 
 	/**
@@ -95,6 +98,12 @@ public class Simulator {
 	public void simulate() {
 	
 		// Local variables can be defined here.
+		Spot[][] occupancy = lot.getOccupancy();
+		int numRows = lot.getNumRows();
+		int numSpotsPerRow = lot.getNumSpotsPerRow();
+		Spot[] staging = new Spot[1];
+		
+
 
 		this.clock = 0;
 		// Note that for the specific purposes of A2, clock could have been 
@@ -104,7 +113,104 @@ public class Simulator {
 	
 			// WRITE YOUR CODE HERE!
 
-			clock++;
+			// Checking to see whether a car has arrived or not
+			if (RandomGenerator.eventOccurred(this.probabilityOfArrivalPerSec)){
+				Car car = (RandomGenerator.generateRandomCar());
+				Spot spot = new Spot (car , 0);
+				incomingQueue.enqueue(spot);
+			}
+
+			//loop over the cars in ParkingLot to see whether or not they will join the outgoing queue
+			for (int i = 0; i < numRows; i++){
+				for (int j = 0; j < numSpotsPerRow; j++){
+					if (occupancy[i][j] != null){
+
+						int first = occupancy[i][j].getTimestamp();
+						occupancy[i][j].setTimestamp(first + 1);
+
+						if (occupancy[i][j].getTimestamp() >= MAX_PARKING_DURATION){
+
+							outgoingQueue.enqueue(occupancy[i][j]);
+							occupancy[i][j] = null;
+
+						}else{
+
+							int time = occupancy[i][j].getTimestamp();
+							//int result = clock - time;
+							Rational chances = departurePDF.pdf(time);
+
+							if (RandomGenerator.eventOccurred(chances)){
+								outgoingQueue.enqueue(occupancy[i][j]);
+								occupancy[i][j] = null;
+							}
+						}
+					}
+				}
+			}
+
+			//attempting to park a car in the incoming queue
+
+
+			if (!incomingQueue.isEmpty()){
+
+				
+
+				if (staging[0] == null){
+					Spot spot1 = incomingQueue.dequeue();
+
+					spot1.setTimestamp(0);
+
+					staging[0] = spot1;
+					
+					
+				}
+				
+				//System.out.println(staging[0]);
+
+				int timestamp = staging[0].getTimestamp();
+				Car car = staging[0].getCar();
+
+				// if lot.attemptParking(car,timestamp)[0] == -1 the spot can park in the lot
+				boolean canPark = lot.attemptParking(car,timestamp)[0] == -1;
+
+				
+
+				//if (!canPark){
+				//	System.out.println(staging[0]);
+				//	System.out.print(lot);
+				//	break;
+				//}
+
+				//System.out.println(lot.attemptParking(car,timestamp)[0]);
+
+				// will be (0,0) if canPark is false. will be (i,j) if canPark is true
+				int num1 = lot.attemptParking(car,timestamp)[1];
+				int num2 = lot.attemptParking(car,timestamp)[2];
+
+				if (staging[0] != null){
+					
+					//setting the timestamp to 0 just before parking it
+					staging[0].setTimestamp(0);
+
+					if (canPark){
+						lot.park(num1,num2,staging[0]); 
+						
+						System.out.println(staging[0].getCar() + " ENTERED at timestep " + clock + "; occupancy is at " + lot.getTotalOccupancy());
+						staging[0] = null;
+					} 
+				}
+			}
+			
+			//time to let out the cars that wish to be let out
+			if (!outgoingQueue.isEmpty()){
+				Spot spot2 = outgoingQueue.dequeue();
+				System.out.println(spot2.getCar() + " EXITED at timestep " + clock + "; occupancy is at " + lot.getTotalOccupancy());
+
+			}
+
+
+		clock++;		
+				
 		}
 	}
 
